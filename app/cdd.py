@@ -819,7 +819,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             colorbar_tickfont=dict(color='#f7f7f7', family='Ginto normal'),
         )
 
-        fig.update_layout(coloraxis_colorbar_x=0.01)
+        fig.update_layout(
+            coloraxis_colorbar_x=0.01,
+            hoverlabel=dict(font_family='Ginto normal')
+        )
 
         fig.add_traces(
             px.scatter_geo(geojson=bounding_box).data
