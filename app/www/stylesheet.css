@@ -1,0 +1,738 @@
+:root {
+    --mobile-breakpoint: 575px;
+    --navbar-height: 50px;
+    --light-gray: #ebebec;
+    --gray: #808080;
+    --dark-gray: #393a3d;
+    --black: #1b1e23;
+    --white: #f7f7f7;
+    --red: #B71C1C;
+    --bs-input-outline: #8d959e;
+    --border-color: var(--black);
+    --background-color: var(--white);
+
+    .irs--shiny .irs-handle {
+        background-color: var(--black);
+        width: 12px;
+        height: 12px;
+        top: 0px;
+    }
+
+    .irs-line {
+        top: 6px;
+        bottom: 0px;
+    }
+    
+    .irs.irs--shiny .irs-bar {
+        top: 5px;
+        bottom: 0px;
+    }
+
+    .plotly div {
+        font-family: 'Ginto normal'
+    }
+
+}
+
+/* woodwell font */
+@font-face {
+    font-family: "Ginto normal";
+    /* src: url('https://storage.googleapis.com/drought-monitor/media/fonts/GintoNormal-Regular.ttf'); */
+    src: url('/GintoNormal-Regular.ttf');
+}
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Ginto normal', monospace;
+    --bs-body-font-family: 'Ginto normal', monospace;
+}
+
+.container-fluid {
+    margin: 0;
+    --bs-gutter-x: 0rem;
+}
+
+#layout {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 100vw;
+    min-width: 250px;
+    height: 100vh;
+    max-height: 1200px;
+    overflow: hidden;
+}
+
+#navbar {
+    display: flex;
+    height: var(--navbar-height);
+    width: 100%;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+    --bs-gutter-x: 0;
+}
+
+#logo-container {
+    display: flex;
+    flex: 1;
+    width: 25%;
+    min-width: 190px;
+    max-width: 350px;
+    height: var(--navbar-height);
+    margin: 0px auto;
+}
+
+#logo-inner-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    max-width: 300px;
+    margin: 0px auto;
+    align-items: center;
+    padding: 0px 5px;
+}
+
+#org-title {
+    padding: 5px 0px 5px 10px;
+    margin-bottom: 0px;
+    font-size: 1.0rem;
+}
+
+#menu-container {
+    display: flex;
+    flex: 3;
+    height: var(--navbar-height);
+}
+
+#menu-inner-container {
+    display: flex;
+    justify-content: flex-end;
+    height: 80%;
+    width: 100%;
+    margin: auto 0;
+}
+
+#settings_button {
+    margin: 0 5px;
+}
+
+#load_data_button {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.25rem;
+}
+
+#process-data-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.bslib-task-button {
+    --bs-btn-color: var(--black);
+    --bs-btn-bg: var(--white);
+    --bs-btn-border-color: None;
+
+    --bs-btn-hover-color: var(--white);
+    --bs-btn-hover-bg: var(--gray);
+    --bs-btn-hover-border-color: None;
+
+    --bs-btn-active-color: var(--white);
+    --bs-btn-active-bg: var(--black);
+    --bs-btn-active-border-color: None;
+    --bs-btn-active-shadow: None;
+    --bs-btn-focus-shadow-rgb: None;
+
+    --bs-btn-disabled-color: var(--white);
+    --bs-btn-disabled-bg: var(--black);
+    --bs-btn-disabled-border-color: None;
+    --bs-btn-disabled-opacity: 1.0;
+
+    outline: 1px solid var(--black);
+}
+
+.bslib-task-button[case="ready"] {
+    color: var(--black);
+    background-color: var(--white);
+    outline: 1px solid var(--black);
+}
+
+.action-button {
+    border: 0rem;
+    padding: 0 1rem;
+    --bs-btn-color: var(--black);
+    --bs-btn-bg: var(--white);
+    --bs-btn-border-color: None;
+}
+
+.action-button:disabled {
+    color: var(--white);
+    background-color: var(--black)
+}
+
+#process_data_button {
+    width: 100%;
+    outline: 1px solid var(--black);
+    padding: 0.5rem 0rem;
+    margin-bottom: 40px;
+}
+
+#process_data_button:hover {
+    border-width: 0px;
+    outline-width: 0px;
+}
+
+.bslib-task-button:hover {
+    border-width: 0px;
+    outline-width: 0px;
+}
+
+#menu-icon-container {
+    display: flex;
+    height: 100%;
+    margin: 0 1.0rem
+}
+
+#menu-icon {
+    display: block;
+    margin: auto;
+}
+
+#container {
+    position: relative;
+    width: 100%;
+    height: calc(100% - var(--navbar-height));
+    display: flex;
+}
+
+#update-message-container {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background-color: var(--white);
+    justify-content: center;
+    align-items: center;
+}
+
+#update-message {
+    border: 1px solid var(--red);
+    color: var(--red);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    margin: 1rem;
+}
+
+.well {
+    background-color: var(--background-color);
+    border: 0px;
+}
+
+#sidebar-container {
+    border-right: 1px solid var(--border-color);
+    width: 25vw;
+    min-width: 250px;
+    max-width: 350px;
+    margin: 0;
+    border-radius: 0px;
+    padding: 0rem; /* this was 1rem before, could be useful for element inside boxes */
+    background-color: var(--white);
+    overflow-y: auto;
+}
+
+#load-data-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
+#load-data-screen {
+    border: 1px solid red;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(247, 247, 247, 0.25);
+}
+
+#sidebar-inner-container {
+    height: 100%;
+    max-width: 300px;
+    margin: 20px auto;
+    padding: 0px 5px;
+}
+
+#sidebar {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    background-color: var(--background-color);
+}
+
+.select-label {
+    margin-bottom: 0px;
+}
+
+input:focus,
+select:focus,
+option:focus,
+textarea:focus,
+button:focus {
+    outline: 0;
+    box-shadow: none !important;
+}
+
+.shiny-input-select {
+    margin-bottom: 20px;
+    box-shadow: none !important;
+    outline: 0;
+}
+
+.shiny-input-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.shiny-input-container:not(.shiny-input-container-inline) {
+    width: 300px;
+    max-width: 100%;
+}
+
+.shiny-input-text {
+    box-shadow: 0 !important;
+}
+  
+select option:active, select option:checked, select option:focus, select option:focus-visible {
+    outline: none !important;    
+    border: 0px !important;
+    box-shadow: none !important;
+}
+
+#main-container {
+    flex: 1;
+    height: 100%;
+    background-color: var(--background-color);
+    overflow-y: scroll;
+    position: relative;
+}
+
+#main-container:has(#about-container:not([style*="display: none"]) ) #main {
+    display: none;
+}
+
+#about-container {
+    border: 1px solid var(--border-color);
+    display: flex;
+    position: absolute;
+    background-color: var(--background-color);
+    inset: 1rem;
+    z-index: 10;
+}
+
+#main {
+    background-color: var(--background-color);
+    width: 90%;
+    height: 100%;
+    margin: 20px auto 10px auto;
+    padding-bottom: 10px;
+}
+
+#about-inner-container {
+    position: relative;
+    width: 100%;
+}
+
+#close_about_button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.25rem 0.5rem;
+    border: 0;
+    border-radius: 0;
+}
+
+.action-button{
+    color: var(--black);
+    background-color: var(--white);
+}
+
+.action-button:hover, .bslib-task-button:hover {
+    color: var(--white);
+    background-color: var(--gray);
+}
+
+.action-button:active, .action-button:target, .bslib-task-button:active, .bslib-task-button:target {
+    --bs-btn-active-color: var(--white);
+    --bs-btn-active-bg: var(--black);
+}
+
+.action-button[disabled=disabled], .action-button:disabled {
+    color: var(--white);
+    background-color: var(--black);
+    opacity: 1;
+}
+
+#about-body {
+    position: absolute;
+    inset: 30px 10px 10px 10px;
+    overflow-y: auto;
+}
+
+#about-body > h2 {
+    font-size: 1.5rem;
+}
+
+#tab_menu {
+    margin: 0px 10px;
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-width: 0px;
+    --bs-nav-tabs-border-color: none;
+    --bs-nav-tabs-border-radius: none;
+    --bs-nav-tabs-link-active-bg: var(--white);
+    --bs-nav-tabs-link-active-color: var(--black);
+    --bs-nav-tabs-link-hover-border-color: none;
+}
+
+.nav {
+    --bs-nav-link-color: var(--gray);
+    --bs-nav-link-hover-color: none;
+    --bs-nav-link-padding-x: 1rem;
+}
+
+.nav-item > .nav-link.active {
+    border-bottom: 1px solid var(--black);
+}
+
+#country_filter_text, #country_name_text, #country_bbox_text {
+    border: 1px solid var(--border-color);
+    height: 30px;
+    width: 30%;
+    margin: 5px 10px;
+}
+
+#country_bbox_text {
+    width: 40%;
+}
+
+#country_name_text, #country_bbox_text {
+    display: inline-block;
+}
+
+#forecast-map-container {
+    border: 1px solid var(--border-color);
+    height: 450px;
+    margin: 30px 10px 5px 10px;
+}
+
+.js-plotly-plot .plotly .modebar-group {
+    padding-left: 0px;
+}
+
+/* https://community.plotly.com/t/plotly-6-map-attribution-box-positioning/91228 */
+/* The following styles ensure the attribution tag floats above the map and should be removed if the issue is fixed in a future plotly release. */
+.maplibregl-ctrl-bottom-right {
+    bottom: 10px;
+    right: 10px;
+    font-family: 'Ginto normal';
+}
+  
+.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-top-left, .maplibregl-ctrl-top-right {
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+}
+  
+.maplibregl-map {
+    font: 12px/20px 'Ginto normal';
+    font-family: 'Ginto normal'
+}
+  
+.maplibregl-ctrl-attrib {
+    background-color: #d4dadc;
+    border-radius: 10px;
+    padding: 2px 5px;
+}
+  
+/* this is necessary to remove spacing below the canvas */
+.maplibregl-canvas {
+    display: block;
+}
+  
+.maplibregl-ctrl-attrib-button {
+    display: none;
+}
+
+#iframe-container {
+    border: 1px solid var(--border-color);
+    height: 550px;
+    margin: 30px 10px 10px 10px;
+}
+
+.download-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    user-select: none;
+    height: 30px;
+    margin: 5px 10px 0px 10px;
+}
+
+#download-csv-container {
+    margin-top: 20px;
+}
+
+.shiny-download-link {
+    color: var(--black);
+}
+
+#timeseries-container {
+    border: 1px solid var(--border-color);
+    height: 330px;
+    margin: 0px 10px 5px 10px;
+}
+
+#timeseries-toggle-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background-color: var(--background-color);
+    width: 100%;
+    height: 30px;
+}
+
+#timeseries-toggle-container > .shiny-input-container {
+    width: 100px;
+    margin-left: 0.75rem;
+    margin-bottom: 0rem;
+}
+
+.checkbox {
+    height: 100%;
+    margin-bottom: 0;
+}
+
+.shiny-input-checkbox {
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+    box-shadow: none !important;
+    outline: 0;
+    margin: 0;
+}
+
+.form-check-input:focus, .shiny-input-container .checkbox input:focus, .shiny-input-container .checkbox-inline input:focus, .shiny-input-container .radio input:focus, .shiny-input-container .radio-inline input:focus {
+    border-color: var(--bs-input-outline);
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(0,123,194,0.25);
+}
+
+.form-check-input:checked, .shiny-input-container .checkbox input:checked, .shiny-input-container .checkbox-inline input:checked, .shiny-input-container .radio input:checked, .shiny-input-container .radio-inline input:checked {
+    background-color: var(--black);
+    border-color: var(--border-color);
+}
+
+.checkbox, span {
+    user-select: none;
+}
+
+.card {
+    --bs-card-spacer-y: 0rem;
+    --bs-card-spacer-x: 0rem;
+    --bs-card-border-width: 0rem;
+    --bs-card-bg: var(--background-color);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#timeseries-inner-container {
+    width: 100%;
+    height: 295px;
+}
+
+#time-slider-container {
+    margin: 20px 10px 5px 10px;
+}
+
+#time-slider-container:disabled {
+    pointer-events: none;
+    background-color: var(--light-gray);
+}
+
+#time-slider-container > * {
+    width: 100%;
+}
+
+#reset_skip_button, #skip_years_button, #skip_months_button {
+    position: relative;
+    float: right;
+    width: auto;
+    padding: 3px 6px;
+    margin: 5px 0px 5px 5px;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+#reset_skip_button:hover, #skip_years_button:hover, #skip_months_button:hover {
+    outline: 1px solid var(--gray);
+    background-color: var(--background-color);
+    color: var(--gray)
+}
+
+#reset_skip_button:active, #skip_years_button:active, #skip_months_button:active {
+    outline: 1px solid var(--black);
+    background-color: var(--black);
+    color: var(--white);
+}
+
+.irs--shiny .irs-bar {
+    background: var(--black);
+}
+
+.irs--shiny {
+    height: 1rem;
+}
+
+#time-slider-labels-container {
+    height: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.time-slider-label {
+    border-radius: 0.25rem;
+    line-height: 1.3333;
+    background-color: var(--light-gray);
+    padding: 3px 6px;
+}
+
+#time_slider_output {
+    padding: 3px 0px;
+    line-height: 1.3333;
+}
+
+.irs-min, .irs-max, .irs-to, .irs-from, .irs-single {
+    display: none;
+}
+
+#timeseries-table-container {
+    border: 1px solid var(--border-color);
+    height: 400px;
+    margin: 0px 10px 5px 10px;
+    overflow-y: scroll;
+}
+
+.table {
+    --bs-table-bg: var(--background-color);
+    --bs-table-color: var(--border-color);
+}
+
+shiny-data-frame#timeseries_table {
+    --shiny-datagrid-table-top-border: 0px;
+}
+
+@media (max-width: 700px) {
+    #main {
+        width: 100%;
+    }
+
+    .select-label-container {
+        width: 100%;
+    }
+
+    .nav {
+        --bs-nav-link-padding-x: 0.75rem;
+    }
+
+    #timeseries-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    #timeseries-toggle-container {
+        justify-content: flex-start;
+    }
+
+    #timeseries-inner-container {
+        width: 150%;
+    }
+}
+
+@media (max-width: 576px) {
+    #container {
+        flex-direction: column;
+    }
+
+    #menu-icon-container {
+        display: none;
+    }
+
+    #about-container {
+        inset: 0rem;
+        border-top: 0rem;
+    }
+
+    #sidebar-container {
+        display: none;
+        width: 100%;
+        max-width: 100%;
+        height: 40%;
+        border-right: 0px;
+        border-bottom: 1px solid var(--black);
+        overflow-y: auto;
+    }
+
+    #sidebar {
+        padding-bottom: 20px;
+    }
+
+    #sidebar-inner-container {
+        max-width: 500px;
+    }
+
+    #sidebar-inner-container > .shiny-input-container:last-of-type {
+        padding-bottom: 10px;
+    }
+
+    .nav {
+        --bs-nav-link-padding-x: 1rem;
+    }
+
+    .shiny-input-container:not(.shiny-input-container-inline) {
+        width: 100%;
+    }
+
+    .download-container {
+        display: none;
+    }
+
+    #timeseries-container {
+        margin-top: 30px;
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    #timeseries-toggle-container {
+        justify-content: flex-end;
+    }
+
+    #timeseries-inner-container {
+        width: 100%;
+    }
+
+    #time-slider-container {
+        margin-bottom: 25px;
+    }
+
+    #timeseries-table-container {
+        margin-bottom: 100px;
+    }
+}

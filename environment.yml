@@ -1,0 +1,28 @@
+name: shiny
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - anywidget
+  - fiona
+  - folium
+  - geocube
+  - geopandas
+  - h5netcdf
+  - matplotlib
+  - netcdf4
+  - numpy
+  - pandas
+  - pip
+  - plotly
+  - proj
+  - pyarrow
+  - pyproj
+  - rasterio
+  - rioxarray
+  - shapely
+  - shiny
+  - shinywidgets
+  - xarray
+  - zarr

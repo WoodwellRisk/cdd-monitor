@@ -1,0 +1,33 @@
+# python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+ENV/
+.env
+.venv
+
+# common
+.git
+.gitignore
+.github/
+node_modules/
+Dockerfile
+docker-compose.yml
+.dockerignore
+.DS_Store
+*.log
