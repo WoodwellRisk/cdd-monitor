@@ -54,4 +54,4 @@ WORKDIR /app
 
 # run the application
 # https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
-CMD ["shiny", "run", "cdd.py", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["shiny", "run", "app.py", "--host", "0.0.0.0", "--port", "8080"]

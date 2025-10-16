@@ -26,38 +26,39 @@ from pathlib import Path
 
 from utils import *
 
-# shiny run --reload drought.py
+# shiny run --reload app.py
 
 updating = False
 
-# # Load data
-# df = pd.read_csv(
-#     "https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
-# df.columns = [col.replace("AAPL.", "") for col in df.columns]
-# df_dates = [pd.to_datetime(date) for date in sorted(df.Date.values)]
+year = 2025
+month = 9
+month_ic = str(month) if month >= 10 else '0' + str(month) 
+year_ic = str(year)
 
-# open historical and forecast data
-h = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+historical_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')]
+forecast_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)][1:]
 
-# if not updating:
-#     # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
-#     f = f[['5%', '20%', 'perc', '80%', '95%']]
+# this is used in the the filename for downloading plots and tables, but is also used in slider values
+min_date = None if updating else historical_dates[0]
+min_slider_date = min_date
+max_slider_date = None if updating else historical_dates[-5]
+forecast_date = None if updating else forecast_dates[0]
+slider_dates = historical_dates[:-4]
+
+min_index = None if updating else 0
+max_year = None if updating else year # we calculated this above
+skip_index = None if updating else slider_dates.index(f'{max_year - 4}-01-01')
+max_index = None if updating else len(slider_dates) - 1
+
+# open historical and forecast data for both cdd and hdd
+h_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
 # open country and states boundary layers
 countries = gpd.GeoDataFrame(columns=['name', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
 states = gpd.GeoDataFrame(columns=['name', 'country', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
-
-# this is used in the the filename for downloading plots and tables, but is also used in slider values
-min_slider_date = None if updating else '1991-01-01'
-max_slider_date = None if updating else pd.to_datetime(h.time.values[-5]).strftime('%Y-%m-%d')
-forecast_date = None if updating else pd.to_datetime(sorted(f.time.values)[0]).strftime('%Y-%m-%d')
-dates = None if updating else [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h.time.values[:-4])]
-
-min_index = None if updating else 0
-max_year = None if updating else pd.to_datetime(h.time.values[-1]).year
-skip_index = None if updating else dates.index(f'{max_year - 4}-01-01')
-max_index = None if updating else len(dates) - 1
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -96,6 +97,11 @@ app_ui = ui.page_fluid(
             ui.div({'id': 'sidebar-container', 'class': 'show'},
                 ui.div({'id': 'sidebar'}, 
                     ui.div({'id': 'sidebar-inner-container'},
+
+                        ui.div({'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select either CDD or HDD:')
+                        ),
+                        ui.input_select('degree_days_select', '', {'cdd':'CDD', 'hdd':'HDD'}, size=2),
 
                         ui.div({'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select a country:')
@@ -158,7 +164,6 @@ app_ui = ui.page_fluid(
 
                         id='tab_menu'
                     ),
-                
                 ),
             ),
 
@@ -171,13 +176,13 @@ app_ui = ui.page_fluid(
                     ui.div({'id': 'about-body'},
                         ui.markdown(
                             """
-                            ## Cooling degree days
-                            This site displays  an **estimate** of historical cooling degree days (CDD) along with an experimental 6-month forecast. 
-                            Note that the CDD metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we
-                            are attempting to estimate monthly CDD from monthly temperature data.
+                            ## Heating and cooling degree days
+                            This site displays  an **estimate** of historical heating and cooling degree days (HDD and CDD, respectively) along with an experimental 6-month forecast. 
+                            Note that the a 'degree days' metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate 
+                            monthly degree days from monthly temperature data.
 
                             ## Data sources
-                            The CDD layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
+                            The degree days layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
 
                             National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>. 
 
@@ -208,9 +213,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     bounds = reactive.value([])
     bbox = reactive.value([])
 
+    # these values change the data between CDD and HDD
+    degree_days = reactive.value(None)
+
     # these values represent the data clipped to a specific area, used for the timeseries figures
-    historical_cdd = reactive.value(None)
-    forecast_cdd = reactive.value(None)
+    historical_dd = reactive.value(None)
+    forecast_dd = reactive.value(None)
 
     # values for quickly storing and downloading figures and tables
     timeseries_to_save = reactive.value(None)
@@ -230,6 +238,14 @@ def server(input: Inputs, output: Outputs, session: Session):
                     ),
                 ),
             )
+
+    
+    @reactive.effect
+    @reactive.event(input.degree_days_select)
+    def update_degree_days():
+        dd = input.degree_days_select()
+        print(dd)
+        degree_days.set(dd)
 
 
     @reactive.effect
@@ -255,7 +271,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     ),
                     ui.input_slider('time_slider', '',
                         min=0,
-                        max=len(dates) - 1,
+                        max=len(slider_dates) - 1,
                         value=skip_index,
                     ),
                 ),
@@ -285,7 +301,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.time_slider)
     def update_slider_date():
-        slider_date.set(dates[input.time_slider()])
+        slider_date.set(slider_dates[input.time_slider()])
 
 
     @render.text
@@ -359,6 +375,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         
         state_options.set(new_options)
 
+
     @reactive.effect
     @reactive.event(state_options)
     def update_state_select():
@@ -402,12 +419,20 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.effect
     @reactive.event(input.process_data_button)
-    def update_cdd_data():
+    def update_dd_data():
 
         cname = country_name()
         sname = state_name()
-        historical = h
-        forecast = f
+        var = degree_days()
+
+        if(var == 'cdd'):
+            historical = h_cdd
+            forecast = f_cdd
+        elif(var == 'hdd'):
+            historical = h_hdd
+            forecast = f_hdd
+        else:
+            raise ValueError("The degree days option should either be CDD or HDD.")
 
         # on app start or page reload, these variables will be empty
         if(cname == '' or sname == '' or historical is None or forecast is None):
@@ -427,21 +452,22 @@ def server(input: Inputs, output: Outputs, session: Session):
             historical = historical.rio.clip(state.geometry, all_touched=True, drop=True)
             forecast = forecast.rio.clip(state.geometry, all_touched=True, drop=True)
 
-        historical_cdd.set(historical)
-        forecast_cdd.set(forecast)
+        historical_dd.set(historical)
+        forecast_dd.set(forecast)
 
 
     @reactive.effect
-    @reactive.event(historical_cdd, forecast_cdd, input.historical_checkbox, input.forecast_checkbox)
+    @reactive.event(historical_dd, forecast_dd, input.historical_checkbox, input.forecast_checkbox)
     def update_dataframe():
         cname = country_name()
         sname = state_name()
+        var = degree_days()
 
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
 
-        historical = historical_cdd()
-        forecast = forecast_cdd()
+        historical = historical_dd()
+        forecast = forecast_dd()
 
         # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
         if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
@@ -452,8 +478,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             # include just historical
             if(show_historical == True and show_forecast == False):
                 df = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
-                df['cdd'] = df['cdd'].astype(float).round(4)
-                # df['agree'] = np.nan
+                df[var] = df[var].astype(float).round(4)
                 df['time'] = df['time'].dt.date
                 df.columns = ['time', 'degree days']
                 df['country'] = cname
@@ -467,7 +492,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             elif(show_historical == False and show_forecast == True):
                 df = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 # this is the 50% line in the forecast data
-                df['cdd'] = df['cdd'].astype(float).round(4)
+                df[var] = df[var].astype(float).round(4)
                 df['time'] = df['time'].dt.date
                 df.columns = ['time', 'degree days']
                 df['country'] = cname
@@ -480,7 +505,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             # else both are active, include both
             else:
                 df_historical = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
-                df_historical['cdd'] = df_historical['cdd'].astype(float).round(4)
+                df_historical[var] = df_historical[var].astype(float).round(4)
                 df_historical['time'] = df_historical['time'].dt.date
                 df_historical.columns = ['time', 'degree days']
                 df_historical['country'] = cname
@@ -489,7 +514,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical = df_historical[['country', 'state', 'type', 'time', 'degree days']]
 
                 df_forecast = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
-                df_forecast['cdd'] = df_forecast['cdd'].astype(float).round(4)
+                df_forecast[var] = df_forecast[var].astype(float).round(4)
                 df_forecast['time'] = df_forecast['time'].dt.date
                 df_forecast.columns = ['time', 'degree days']
                 df_forecast['country'] = cname
@@ -534,6 +559,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     # @render_widget
     def plotly_timeseries():  
+        # Load data
+        df = pd.read_csv(
+            "https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
+        df.columns = [col.replace("AAPL.", "") for col in df.columns]
+        df_dates = [pd.to_datetime(date) for date in sorted(df.Date.values)]
+        
         # https://plotly.com/python/range-slider/
         config = {
             'staticPlot': False, 
@@ -587,8 +618,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot
     @reactive.event(table_to_save, slider_date)
     def timeseries(alt="A graph showing a timeseries of historical and forecasted cooling degree days"):
-        historical = historical_cdd()
-        forecast = forecast_cdd()
+        historical = historical_dd()
+        forecast = forecast_dd()
 
         if(historical is None or forecast is None):
             return
@@ -693,14 +724,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         return fig
 
 
-    @render.download(filename=lambda: f'cdd-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{forecast_date}.png'.replace('\'', '').replace(' ', '-').replace('--', '-').replace('--', '-'))
+    @render.download(filename=lambda: f'{input.degree_days_select()}-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{forecast_date}.png'.replace('\'', '').replace(' ', '-').replace('--', '-').replace('--', '-'))
     def download_timeseries_link():
 
         cname = country_name()
         sname = state_name()
 
-        forecast = forecast_cdd()
-        historical = historical_cdd()
+        forecast = forecast_dd()
+        historical = historical_dd()
 
         if(forecast is None and historical is None):
             return
@@ -734,15 +765,16 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
     @render.ui
-    @reactive.event(forecast_cdd)
+    @reactive.event(forecast_dd)
     def forecast_map(alt="a map showing the borders of a country of interest"):
 
         cname = country_name()
         sname = state_name()
+        var = degree_days()
         # either country or state polygon should be used for centroid calculation, but we don't need both
         country = countries.query(" name == @cname ")
         state = states.query(" name == @sname and country == @cname ")
-        forecast = forecast_cdd()
+        forecast = forecast_dd()
 
         if(cname == '' or forecast is None):
             return
@@ -763,7 +795,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         max_bounds = max(abs(bbox[0] - bbox[2]), abs(bbox[1] - bbox[3])) * 111
         zoom = 11 - np.log(max_bounds)
 
-        df = forecast['cdd'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
+        df = forecast[var].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Degree days']
 
         forecast_dates = df.time.unique().tolist()
@@ -856,7 +888,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         return render.DataTable( df, width='100%', height='375px', editable=False, )
     
 
-    @render.download(filename=lambda: f'cdd-table-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{forecast_date}.csv'.replace('\'', '').replace(' ', '-').replace('--', '-').replace('--', '-'))
+    @render.download(filename=lambda: f'{input.degree_days_select()}-table-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{forecast_date}.csv'.replace('\'', '').replace(' ', '-').replace('--', '-').replace('--', '-'))
     def download_csv_link():
         df = table_to_save()
 

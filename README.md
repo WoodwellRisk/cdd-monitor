@@ -1,8 +1,8 @@
 [mit license]: https://badgen.net/badge/license/MIT/blue
 ![MIT License][]
 
-# Woodwell Risk CDD Monitor and Forecast
-This site displays  an **estimate** of historical cooling degree days (CDD) along with an experimental 6-month forecast. Note that the CDD metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate monthly CDD from monthly temperature data.
+# Woodwell Risk CDD and HDD Monitor and Forecast
+This site displays  an **estimate** of historical cooling and heating degree days (CDD and HDD, respectively) along with an experimental 6-month forecast. Note that the a 'degree days' metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate monthly degree days from monthly temperature data.
 
 ## Python environment
 To recreate the conda environment we use in this repository, please run:
@@ -17,7 +17,7 @@ conda activate shiny
 ## Run the app locally
 To start a local server and see the app, please run the following command from within the `app/` directory:
 ```python
-shiny run --reload cdd.py
+shiny run --reload app.py
 ```
 
 ## Data sources and processing steps
