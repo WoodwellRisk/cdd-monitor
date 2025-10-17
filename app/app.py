@@ -617,9 +617,10 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.plot
     @reactive.event(table_to_save, slider_date)
-    def timeseries(alt="A graph showing a timeseries of historical and forecasted cooling degree days"):
+    def timeseries(alt="A graph showing a timeseries of historical and forecasted degree days"):
         historical = historical_dd()
         forecast = forecast_dd()
+        var = degree_days()
 
         if(historical is None or forecast is None):
             return
@@ -688,7 +689,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             legend_elements = [forecast_label]
 
         ax.set_xlabel('Time', fontproperties=ginto_medium)
-        ax.set_ylabel('Cooling degree days', fontproperties=ginto_medium)
+        ax.set_ylabel(f'{"Cooling" if var == "cdd" else "Heating"} ' + ' degree days', fontproperties=ginto_medium)
 
         # when there are 60 or more entries in the dataframe, 
         # the date labels along the x-axis get crowded and difficult to read
@@ -729,6 +730,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         cname = country_name()
         sname = state_name()
+        var = degree_days()
 
         forecast = forecast_dd()
         historical = historical_dd()
@@ -753,7 +755,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif(show_historical == True and show_forecast == True):
             historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f"{historical_and_forecast_label} cooling degree days for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
+        title = f"{historical_and_forecast_label} {"cooling" if var == "cdd" else "heating"} degree days for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
 
         ax.set_title(title, fontproperties=ginto_medium)
 
