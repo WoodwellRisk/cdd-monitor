@@ -660,18 +660,17 @@ def server(input: Inputs, output: Outputs, session: Session):
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
             # this is the historical data plus the first entry for forecast data
-            # df_historical = df.query(" type == 'historical' ")
             df_historical = df.iloc[6:, :]
-            # print(df_historical[['country', 'time', 'percentile']])
-            # print()
 
             # this is the 6-month forecast
             df_forecast = df.iloc[0:7, :]
-            # print(df_forecast[['country', 'time', 'percentile']])
-            # print()
+            
+            # this dataframe is purely aesthetic; it covers up the gap in the historical and forecast data in the plot
+            df_bridge = df.iloc[5:7]
             
             ax.plot(df_forecast['time'], df_forecast['degree days'], color=timeseries_color, linestyle='--')
             ax.plot(df_historical['time'], df_historical['degree days'], color=timeseries_color)
+            ax.plot(df_bridge['time'], df_bridge['degree days'], color=timeseries_color)
 
             legend_elements = [historical_label, forecast_label]
 
