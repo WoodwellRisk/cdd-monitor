@@ -836,7 +836,18 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif(show_historical == True and show_forecast == True):
             historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f"{historical_and_forecast_label} {"cooling" if var == "cdd" else "heating"} degree days for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
+        cname_label = cname
+
+        if(sname == 'CONUS'):
+            sname_label = 'CONUS'
+            cname_label = ''
+        elif(sname != '' and sname != 'All'):
+            sname_label = sname + ', '
+        else:
+            sname_label = ''
+
+        # title = f"{historical_and_forecast_label} {"cooling" if var == "cdd" else "heating"} degree days for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
+        title = f"{sname_label}{cname_label}"
 
         ax.set_title(title, fontproperties=ginto_medium)
 
