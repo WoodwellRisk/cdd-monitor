@@ -938,6 +938,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         )
 
         fig.update_coloraxes(
+            colorbar_title='Degree days',
             colorbar_title_side='right',
             colorbar_title_font=dict(color='#f7f7f7', family='Ginto normal'),
             colorbar_len=0.8,
