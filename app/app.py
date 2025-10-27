@@ -52,9 +52,14 @@ max_index = None if updating else len(slider_dates) - 1
 
 # open historical and forecast data for both cdd and hdd
 h_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 h_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+
+f_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 f_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+
+if not updating:
+    f_cdd = f_cdd[['time', 'x', 'y', '5%', 'cdd', '95%']]
+    f_hdd = f_hdd[['time', 'x', 'y', '5%', 'hdd', '95%']]
 
 # open country and states boundary layers
 countries = gpd.GeoDataFrame(columns=['name', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
@@ -472,7 +477,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
         if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
             df = pd.DataFrame({
-                'country': [], 'state': [], 'type': [], 'time': [], 'degree days': [],
+                'country': [], 'state': [], 'type': [], 'degree days': [], 'time': [], 'mean': [],
             })
         else:
             # include just historical
@@ -480,12 +485,15 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df[var] = df[var].astype(float).round(4)
                 df['time'] = df['time'].dt.date
-                df.columns = ['time', 'degree days']
+                df.columns = ['time', 'mean']
                 df['country'] = cname
                 df['state'] = sname
                 df['type'] = 'historical'
+                df['5%'] = np.nan
+                df['95%'] = np.nan
+                df['degree days'] = 'cooling' if var == 'cdd' else 'heating'
                 
-                df = df[['country', 'state', 'type', 'time', 'degree days']].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'state', 'type', 'degree days', 'time', '5%', 'mean', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
             
             # include just forecast
@@ -493,13 +501,17 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 # this is the 50% line in the forecast data
                 df[var] = df[var].astype(float).round(4)
+                # these are the uncertainty bands
+                df['5%'] = df['5%'].astype(float).round(4)
+                df['95%'] = df['95%'].astype(float).round(4)
                 df['time'] = df['time'].dt.date
-                df.columns = ['time', 'degree days']
+                df.columns = ['time', '5%', 'mean', '95%']
                 df['country'] = cname
                 df['state'] = sname
                 df['type'] = 'forecast'
+                df['degree days'] = 'cooling' if var == 'cdd' else 'heating'
                 
-                df = df[['country', 'state', 'type', 'time', 'degree days',]].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'state', 'type', 'degree days', 'time', '5%', 'mean', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
 
             # else both are active, include both
@@ -507,20 +519,26 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_historical[var] = df_historical[var].astype(float).round(4)
                 df_historical['time'] = df_historical['time'].dt.date
-                df_historical.columns = ['time', 'degree days']
+                df_historical.columns = ['time', 'mean']
                 df_historical['country'] = cname
                 df_historical['state'] = sname
                 df_historical['type'] = 'historical'
-                df_historical = df_historical[['country', 'state', 'type', 'time', 'degree days']]
+                df_historical['5%'] = np.nan
+                df_historical['95%'] = np.nan
+                df_historical['degree days'] = 'cooling' if var == 'cdd' else 'heating'
+                df_historical = df_historical[['country', 'state', 'type', 'degree days', 'time', '5%', 'mean', '95%']]
 
                 df_forecast = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_forecast[var] = df_forecast[var].astype(float).round(4)
+                df_forecast['5%'] = df_forecast['5%'].astype(float).round(4)
+                df_forecast['95%'] = df_forecast['95%'].astype(float).round(4)
                 df_forecast['time'] = df_forecast['time'].dt.date
-                df_forecast.columns = ['time', 'degree days']
+                df_forecast.columns = ['time', '5%', 'mean', '95%']
                 df_forecast['country'] = cname
                 df_forecast['state'] = sname
                 df_forecast['type'] = 'forecast'
-                df_forecast = df_forecast[['country', 'state', 'type', 'time', 'degree days']]
+                df_forecast['degree days'] = 'cooling' if var == 'cdd' else 'heating'
+                df_forecast = df_forecast[['country', 'state', 'type', 'degree days', 'time', '5%', 'mean', '95%']]
 
                 df = pd.concat([df_historical, df_forecast]).sort_values('time', ascending=False).reset_index(drop=True)
 
@@ -635,12 +653,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         # https://stackoverflow.com/questions/8866046/python-round-up-integer-to-next-hundred
         if df.empty:
             upper_limit = 100
-        else:
-            upper_limit = int(np.ceil(df['degree days'].max() / 50.0)) * 50
-        
+
         df = df.query(" @pd.to_datetime(@df['time'], format='%Y-%m-%d') >= @pd.Timestamp(@filter_date) ")
-        # print(df.head(20))
-        # print()
 
         timeseries_color = '#1b1e23'
         high_certainty_color = '#f4c1c1'
@@ -651,14 +665,48 @@ def server(input: Inputs, output: Outputs, session: Session):
             'ydata': [0],
         }
 
-        historical_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Historical', linewidth=1, **legend_options, )
-        forecast_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Forecast', linestyle='--', linewidth=1, **legend_options)
+        historical_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Historical', linewidth=1.25, **legend_options, )
+        forecast_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Forecast', linestyle='--', linewidth=1.25, **legend_options)
+        high_certainty_label = Line2D(color=high_certainty_color, markerfacecolor=high_certainty_color, label='90%', linewidth=3, **legend_options)
         legend_elements = []
 
         fig, ax = plt.subplots()
 
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
+            # there is also the case that some countries either have no cdd or hdd
+            # https://stackoverflow.com/questions/48570797/check-if-pandas-column-contains-all-zeros#48570911
+            max_historical = df['mean'].max()
+            max_forecast = df['95%'].max()
+
+            if(max_historical >= max_forecast):
+                max_value = max_historical
+            else:
+                max_value = max_forecast
+
+            limits = [5, 10, 25, 50]
+            dividends = [np.round((max_value // limit), 0) for limit in limits]
+
+            if(dividends[3] != 0):
+                largest_base = limits[3]
+                dividend = dividends[3]
+            elif(dividends[2] != 0):
+                largest_base = limits[2]
+                dividend = dividends[2]
+            elif(dividends[1] != 0):
+                largest_base = limits[1]
+                dividend = dividends[1]
+            else: # else all 0's or smallest divisor is 5
+                largest_base = limits[0]
+                dividend = dividends[0]
+
+            # ex: max is 25, so largest base is 25 and dividend = 1
+            # then the upper_limit should be 25, not 50
+            if(dividend * largest_base == max_value):
+                upper_limit = largest_base
+            else:
+                upper_limit = (dividend + 1) * largest_base
+
             # this is the historical data plus the first entry for forecast data
             df_historical = df.iloc[6:, :]
 
@@ -668,14 +716,42 @@ def server(input: Inputs, output: Outputs, session: Session):
             # this dataframe is purely aesthetic; it covers up the gap in the historical and forecast data in the plot
             df_bridge = df.iloc[5:7]
             
-            ax.plot(df_forecast['time'], df_forecast['degree days'], color=timeseries_color, linestyle='--')
-            ax.plot(df_historical['time'], df_historical['degree days'], color=timeseries_color)
-            ax.plot(df_bridge['time'], df_bridge['degree days'], color=timeseries_color)
+            ax.fill_between(df_forecast['time'], df_forecast['5%'], df_forecast['95%'], color=high_certainty_color)
+            ax.plot(df_forecast['time'], df_forecast['mean'], color=timeseries_color, linestyle='--')
+            ax.plot(df_historical['time'], df_historical['mean'], color=timeseries_color)
+            ax.plot(df_bridge['time'], df_bridge['mean'], color=timeseries_color)
 
-            legend_elements = [historical_label, forecast_label]
+            legend_elements = [historical_label, forecast_label, high_certainty_label]
 
         if(show_historical == True and show_forecast == False):
-            ax.plot(df['time'], df['degree days'], color=timeseries_color)
+            if (df['mean'] == 0).all():
+                upper_limit = 0.05
+            else:
+                max_value = df['mean'].max()
+                limits = [5, 10, 25, 50]
+                dividends = [np.round((max_value // limit), 0) for limit in limits]
+
+                if(dividends[3] != 0):
+                    largest_base = limits[3]
+                    dividend = dividends[3]
+                elif(dividends[2] != 0):
+                    largest_base = limits[2]
+                    dividend = dividends[2]
+                elif(dividends[1] != 0):
+                    largest_base = limits[1]
+                    dividend = dividends[1]
+                else: # else all 0's or smallest divisor is 5
+                    largest_base = limits[0]
+                    dividend = dividends[0]
+
+                # ex: max is 25, so largest base is 25 and dividend = 1
+                # then the upper_limit should be 25, not 50
+                if(dividend * largest_base == max_value):
+                    upper_limit = largest_base
+                else:
+                    upper_limit = (dividend + 1) * largest_base
+            
+            ax.plot(df['time'], df['mean'], color=timeseries_color)
 
             if(len(df) == 5):
                 ax.set_xticks([date for date in df.time.values])
@@ -683,9 +759,15 @@ def server(input: Inputs, output: Outputs, session: Session):
             legend_elements = [historical_label]
 
         if(show_historical == False and show_forecast == True):
-            ax.plot(df['time'], df['degree days'], color=timeseries_color, linestyle='--')
+            if (df['5%'] == 0).all() and (df['mean'] == 0 ).all() and (df['95%'] == 0).all():
+                upper_limit = 0.05
+            else:
+                upper_limit = np.round((df['95%'].max() / 50.0), 0) * 50
 
-            legend_elements = [forecast_label]
+            ax.fill_between(df['time'], df['5%'], df['95%'], color=high_certainty_color)
+            ax.plot(df['time'], df['mean'], color=timeseries_color, linestyle='--')
+
+            legend_elements = [forecast_label, high_certainty_label]
 
         ax.set_xlabel('Time', fontproperties=ginto_medium)
         ax.set_ylabel(f'{"Cooling" if var == "cdd" else "Heating"} ' + ' degree days', fontproperties=ginto_medium)
@@ -797,7 +879,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         zoom = 11 - np.log(max_bounds)
 
         df = forecast[var].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
-        df.columns = ['time', 'y', 'x', 'Degree days']
+        df.columns = ['time', 'y', 'x', 'Mean']
 
         forecast_dates = df.time.unique().tolist()
         formatted_dates = [date.strftime("%b-%Y") for date in forecast_dates]
@@ -806,11 +888,11 @@ def server(input: Inputs, output: Outputs, session: Session):
             data_frame = df, 
             lat = df.y, 
             lon = df.x, 
-            color = df['Degree days'],
+            color = df['Mean'],
             # https://plotly.com/python/builtin-colorscales/
             color_continuous_scale = 'agsunset',
             range_color = [0, 1400],
-            hover_data = {'time': False, 'x': False, 'y': False, 'Degree days': ':.3f'},
+            hover_data = {'time': False, 'x': False, 'y': False, 'Mean': ':.3f'},
             map_style = 'carto-darkmatter-nolabels', # 'carto-darkmatter-nolabels',
             zoom=zoom,
             height=445,
@@ -884,7 +966,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.data_frame
     @reactive.event(table_to_save)
     def timeseries_table():
+        var = degree_days()
+        # columns: ['country', 'state', 'type', 'degree days', 'time', '5%', 'mean', '95%']
         df = table_to_save()
+
+        if(not df.empty):
+            df = df.drop(['5%', '95%'], axis=1)
 
         return render.DataTable( df, width='100%', height='375px', editable=False, )
     
