@@ -90,7 +90,7 @@ app_ui = ui.page_fluid(
             ),
             ui.div({'id': 'menu-container'},
                 ui.div({'id': 'menu-inner-container'},
-                ui.input_action_button('about_button', 'About',),
+                # ui.input_action_button('about_button', 'About',),
                 ui.input_action_button('settings_button', 'Settings'),
                 ),
             ),
@@ -172,34 +172,34 @@ app_ui = ui.page_fluid(
                 ),
             ),
 
-            ui.panel_conditional(
-                "input.about_button > input.close_about_button",
-                ui.div({'id': 'about-inner-container'},
-                    ui.div({'id': 'about-header'},
-                        ui.input_action_button("close_about_button", "X"),
-                    ),
-                    ui.div({'id': 'about-body'},
-                        ui.markdown(
-                            """
-                            ## Heating and cooling degree days
-                            This site displays  an **estimate** of historical heating and cooling degree days (HDD and CDD, respectively) along with an experimental 6-month forecast. 
-                            Note that the a 'degree days' metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate 
-                            monthly degree days from monthly temperature data.
+            # ui.panel_conditional(
+            #     "input.about_button > input.close_about_button",
+            #     ui.div({'id': 'about-inner-container'},
+            #         ui.div({'id': 'about-header'},
+            #             ui.input_action_button("close_about_button", "X"),
+            #         ),
+            #         ui.div({'id': 'about-body'},
+            #             ui.markdown(
+            #                 """
+            #                 ## Heating and cooling degree days
+            #                 This site displays  an **estimate** of historical heating and cooling degree days (HDD and CDD, respectively) along with an experimental 6-month forecast. 
+            #                 Note that the a 'degree days' metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate 
+            #                 monthly degree days from monthly temperature data.
 
-                            ## Data sources
-                            The degree days layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
+            #                 ## Data sources
+            #                 The degree days layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
 
-                            National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>. 
+            #                 National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>. 
 
-                            ## Woodwell Risk
-                            You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>. 
-                            Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
-                            """
-                        ),
-                    ),
-                ),
-                {'id': 'about-container'},
-            ), 
+            #                 ## Woodwell Risk
+            #                 You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>. 
+            #                 Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
+            #                 """
+            #             ),
+            #         ),
+            #     ),
+            #     {'id': 'about-container'},
+            # ), 
 
             ui.output_ui('show_update_message'),
         ),
