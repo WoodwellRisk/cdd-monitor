@@ -24,46 +24,55 @@ import ipywidgets
 
 from pathlib import Path
 
-from utils import *
+from utils import (
+    create_bbox_from_coords,
+    forecast_dates,
+    historical_dates,
+    # load_countries,
+    # load_forecast,
+    # load_historical,
+    # load_states,
+)
 
 # shiny run --reload app.py
 
-updating = False
+target_year = 2026
+target_month = 9
 
-year = 2025
-month = 9
-month_ic = str(month) if month >= 10 else '0' + str(month) 
-year_ic = str(year)
+if target_month == 1:
+    target_month = 12
+    target_year = target_year - 1
+else:
+    target_month -= 1
 
-historical_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')]
-forecast_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)][1:]
+year_ic = str(target_year)
+month_ic = str(target_month).zfill(2)
 
 # this is used in the the filename for downloading plots and tables, but is also used in slider values
-min_date = None if updating else historical_dates[0]
+min_date = historical_dates[0]
 min_slider_date = min_date
-max_slider_date = None if updating else historical_dates[-5]
-forecast_date = None if updating else forecast_dates[0]
+max_slider_date = historical_dates[-5]
+forecast_date = forecast_dates[0]
 slider_dates = historical_dates[:-4]
 
-min_index = None if updating else 0
-max_year = None if updating else year # we calculated this above
-skip_index = None if updating else slider_dates.index(f'{max_year - 4}-01-01')
-max_index = None if updating else len(slider_dates) - 1
+min_index = 0
+max_year = int(historical_dates[-1][:4])
+skip_index = slider_dates.index(f'{max_year - 4}-01-01')
+max_index = len(slider_dates) - 1
 
 # open historical and forecast data for both cdd and hdd
-h_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-h_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/h-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h_cdd = xr.open_zarr(Path(__file__).parent / f'mnt/data/zarr/h-cdd-{year_ic}-{month_ic}-01.zarr', zarr_format=3, consolidated=False, decode_coords="all", chunks={}).compute()
+h_hdd = xr.open_zarr(Path(__file__).parent / f'mnt/data/zarr/h-hdd-{year_ic}-{month_ic}-01.zarr', zarr_format=3, consolidated=False, decode_coords="all", chunks={}).compute()
 
-f_cdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-cdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f_hdd = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/f-hdd-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f_cdd = xr.open_zarr(Path(__file__).parent / f'mnt/data/zarr/f-cdd-{year_ic}-{month_ic}-01.zarr', zarr_format=3, consolidated=False, decode_coords="all", chunks={}).compute()
+f_hdd = xr.open_zarr(Path(__file__).parent / f'mnt/data/zarr/f-hdd-{year_ic}-{month_ic}-01.zarr', zarr_format=3, consolidated=False, decode_coords="all", chunks={}).compute()
 
-if not updating:
-    f_cdd = f_cdd[['time', 'x', 'y', '5%', 'cdd', '95%']]
-    f_hdd = f_hdd[['time', 'x', 'y', '5%', 'hdd', '95%']]
+f_cdd = f_cdd[['time', 'x', 'y', '5%', 'cdd', '95%']]
+f_hdd = f_hdd[['time', 'x', 'y', '5%', 'hdd', '95%']]
 
 # open country and states boundary layers
-countries = gpd.GeoDataFrame(columns=['name', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
-states = gpd.GeoDataFrame(columns=['name', 'country', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
+countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
+states = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -98,32 +107,10 @@ app_ui = ui.page_fluid(
 
         # wrapper container for sidebar and main panel
         ui.div({'id': 'container'},
-            # sidebar
-            ui.div({'id': 'sidebar-container', 'class': 'show'},
-                ui.div({'id': 'sidebar'}, 
-                    ui.div({'id': 'sidebar-inner-container'},
-
-                        ui.div({'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select either CDD or HDD:')
-                        ),
-                        ui.input_select('degree_days_select', '', {'cdd':'CDD', 'hdd':'HDD'}, size=2),
-
-                        ui.div({'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a country:')
-                        ),
-                        ui.input_text("country_filter", label='', placeholder='Filter by name'),
-                        ui.input_select('country_select', '', [], size=5),
-
-                        ui.div({'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a state:')
-                        ),
-                        ui.input_select('state_select', '', [], size=5),
-
-                        ui.div({'id': 'process-data-container'},
-                            ui.input_task_button("process_data_button", label="Run"),
-                        ),
-                    )
-                ),
+            ui.div(
+                {'id': 'sidebar-container', 'class': 'show'},
+                # sidebar
+                ui.output_ui('sidebar_content'),
             ),
 
             # figures and tables
@@ -232,24 +219,68 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     slider_date = reactive.value(min_slider_date)
 
+    data_has_loaded = reactive.value(True)
+    
+    # @reactive.effect
+    # @reactive.event(input.load_data_button)
+    # def load_data():
+    #     load_historical('cdd')
+    #     load_forecast('hdd')
+
+    #     load_historical('cdd')
+    #     load_forecast('hdd')
+
+    #     data_has_loaded.set(True)
 
     @render.ui
-    def show_update_message():
-        if updating:
-            return ui.TagList(
-                ui.div({'id': 'update-message-container'},
-                    ui.div({'id': 'update-message'}, 
-                        'The website is currently being updated. Please check back later.'
+    def sidebar_content():
+        if data_has_loaded():
+            sidebar_content = ui.TagList(
+            # sidebar
+                ui.div({'id': 'sidebar'}, 
+                    ui.div({'id': 'sidebar-inner-container'},
+
+                        ui.div({'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select either CDD or HDD:')
+                        ),
+                        ui.input_select('degree_days_select', '', {'cdd':'CDD', 'hdd':'HDD'}, size=2),
+
+                        ui.div({'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a country:')
+                        ),
+                        ui.input_text("country_filter", label='', placeholder='Filter by name'),
+                        ui.input_select('country_select', '', [], size=5),
+
+                        ui.div({'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a state:')
+                        ),
+                        ui.input_select('state_select', '', [], size=5),
+
+                        ui.div({'id': 'process-data-container'},
+                            ui.input_task_button("process_data_button", label="Run"),
+                        ),
+                    ),
+                ),
+            )
+        else:
+            sidebar_content = ui.TagList(
+                ui.div(
+                    {'id': 'load-data-container'},
+                    ui.div(
+                        ui.p({'id': 'load-data-message'}, 'Please load data before continuing'),
+                    ),
+                    ui.input_task_button(
+                        "load_data_button", label='Load Data', label_busy='Loading...'
                     ),
                 ),
             )
 
-    
+        return sidebar_content
+
     @reactive.effect
     @reactive.event(input.degree_days_select)
     def update_degree_days():
         dd = input.degree_days_select()
-        print(dd)
         degree_days.set(dd)
 
 
@@ -261,8 +292,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.ui
     def show_time_slider():
-        if not updating:
-            return ui.TagList(
+        return ui.TagList(
             ui.panel_conditional('input.historical_checkbox == true',
                 ui.div({'id': 'time-slider-container'}, 
                     ui.input_action_link('skip_months_button', 'Last 5 months', class_='skip-button'),
@@ -678,12 +708,9 @@ def server(input: Inputs, output: Outputs, session: Session):
             # https://stackoverflow.com/questions/48570797/check-if-pandas-column-contains-all-zeros#48570911
             max_historical = df['mean'].max()
             max_forecast = df['95%'].max()
-
-            if(max_historical >= max_forecast):
-                max_value = max_historical
-            else:
-                max_value = max_forecast
-
+            min_forecast = df['5%'].max()
+            
+            max_value = max(max_historical, max_forecast, min_forecast)
             limits = [5, 10, 25, 50]
             dividends = [np.round((max_value // limit), 0) for limit in limits]
 
@@ -728,7 +755,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 upper_limit = 0.05
             else:
                 max_value = df['mean'].max()
-                limits = [5, 10, 25, 50]
+                limits = [5, 10, 25, 50, 100]
                 dividends = [np.round((max_value // limit), 0) for limit in limits]
 
                 if(dividends[3] != 0):
@@ -757,15 +784,41 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ax.set_xticks([date for date in df.time.values])
             
             legend_elements = [historical_label]
+            
 
         if(show_historical == False and show_forecast == True):
             if (df['5%'] == 0).all() and (df['mean'] == 0 ).all() and (df['95%'] == 0).all():
                 upper_limit = 0.05
             else:
-                upper_limit = np.round((df['95%'].max() / 50.0), 0) * 50
+                max_value = np.maximum(df['5%'].max(), df['95%'].max())
+                limits = [5, 10, 25, 50, 100]
+                dividends = [np.round((max_value // limit), 0) for limit in limits]
+
+                if(dividends[3] != 0):
+                    largest_base = limits[3]
+                    dividend = dividends[3]
+                elif(dividends[2] != 0):
+                    largest_base = limits[2]
+                    dividend = dividends[2]
+                elif(dividends[1] != 0):
+                    largest_base = limits[1]
+                    dividend = dividends[1]
+                else: # else all 0's or smallest divisor is 5
+                    largest_base = limits[0]
+                    dividend = dividends[0]
+
+                # ex: max is 25, so largest base is 25 and dividend = 1
+                # then the upper_limit should be 25, not 50
+                if(dividend * largest_base == max_value):
+                    upper_limit = largest_base
+                else:
+                    upper_limit = (dividend + 1) * largest_base
 
             ax.fill_between(df['time'], df['5%'], df['95%'], color=high_certainty_color)
             ax.plot(df['time'], df['mean'], color=timeseries_color, linestyle='--')
+
+            forecast_date_format = mdates.DateFormatter('%m-%y')
+            ax.xaxis.set_major_formatter(forecast_date_format)
 
             legend_elements = [forecast_label, high_certainty_label]
 

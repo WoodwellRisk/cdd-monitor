@@ -1,7 +1,8 @@
 anywidget
+dask
 fiona
 folium
-gdal
+gcsfs
 geopandas
 h5netcdf
 matplotlib
@@ -11,6 +12,7 @@ pandas
 plotly
 proj
 pyarrow
+pydantic
 pyproj
 rasterio
 rioxarray
@@ -18,3 +20,4 @@ shapely
 shiny
 shinywidgets
 xarray
+zarr

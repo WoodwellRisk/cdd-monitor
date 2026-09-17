@@ -25,28 +25,8 @@ RUN curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tm
 RUN curl -sSL https://sdk.cloud.google.com | bash
 ENV PATH=$PATH:/root/google-cloud-sdk/bin
 
-# RUN conda install -y \
-RUN pip install --no-cache-dir \
-    anywidget \
-    fiona  \
-    folium \
-    geopandas \
-    h5netcdf \
-    matplotlib \
-    netcdf4 \
-    numpy \
-    pandas \
-    plotly \
-    proj \
-    pyarrow \
-    pyproj \
-    rasterio \
-    rioxarray \
-    shapely \
-    shiny \
-    shinywidgets \
-    xarray \
-    zarr
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # copy application files
 COPY . /app
