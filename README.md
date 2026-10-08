@@ -1,7 +1,7 @@
 [mit license]: https://badgen.net/badge/license/MIT/blue
 ![MIT License][]
 
-# Woodwell Risk CDD and HDD Monitor and Forecast
+# Woodwell Risk energy demand monitor and forecast
 This site displays  an **estimate** of historical cooling and heating degree days (CDD and HDD, respectively) along with an experimental 6-month forecast. Note that the a 'degree days' metric is normally calculated with daily data and aggregated at the monthly or yearly level, whereas we are attempting to estimate monthly degree days from monthly temperature data.
 
 ## Python environment
@@ -22,7 +22,7 @@ shiny run --reload app.py
 
 ## Data sources and processing steps
 ### Vector data
-National and state outlines were downloaded from [Natural Earth](https://www.naturalearthdata.com/). Crop masks were created using a modified version of the [SPAM 2020](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SWPENT) combined rainfed- and irrigated production data for specific crops.
+National and state outlines were downloaded from [Natural Earth](https://www.naturalearthdata.com/). We used regridded [WorldPop](https://www.worldpop.org/) data to population weight degree days metrics when producing timeseries.
 
 ### Raster data
 The temperature data used to create the water CDD estimates comes from [ERA5 monthly averaged data](https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en) and were downloaded using the Copernicus Climate Data Store (CDS) Application Program Interface (API), or [CDS API](https://cds.climate.copernicus.eu/how-to-api).

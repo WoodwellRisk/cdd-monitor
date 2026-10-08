@@ -72,32 +72,43 @@ def create_bbox_from_coords(
 @functools.lru_cache(maxsize=2)
 def load_historical(degree_days: str) -> xr.Dataset:
     return xr.open_zarr(
-    f'gs://{BUCKET}/zarr/h-{degree_days}-{year_ic}-{month_ic}-01.zarr', 
-        zarr_format=3, 
-        consolidated=False, 
-        decode_coords="all", 
-        chunks={}
+        f'gs://{BUCKET}/zarr/h-{degree_days}-{year_ic}-{month_ic}-01.zarr',
+        zarr_format=3,
+        consolidated=False,
+        decode_coords="all",
+        chunks={},
     ).compute()
 
 
 @functools.lru_cache(maxsize=2)
 def load_forecast(degree_days: str) -> xr.Dataset:
     return xr.open_zarr(
-        f'gs://{BUCKET}/zarr/f-{degree_days}-{year_ic}-{month_ic}-01.zarr', 
-        zarr_format=3, 
-        consolidated=False, 
-        decode_coords="all", 
-        chunks={}
-    ).compute()[['time', 'x', 'y', degree_days, 'cdd', '95%']]
+        f'gs://{BUCKET}/zarr/f-{degree_days}-{year_ic}-{month_ic}-01.zarr',
+        zarr_format=3,
+        consolidated=False,
+        decode_coords="all",
+        chunks={},
+    ).compute()[['time', 'x', 'y', '5%', degree_days, '95%']]
 
 
-# lazy load country boundary layer
+# lazy load regridded population layers
+@functools.lru_cache(maxsize=2)
+def load_population(time_period: str) -> xr.Dataset:
+    return xr.read_dataset(
+        f'gs://{BUCKET}/zarr/population-{time_period}.zarr',
+        consolidated=False,
+        decode_coords="all",
+        chunks={},
+    )
+
+
+# lazy load country layer
 @functools.lru_cache(maxsize=1)
 def load_countries() -> gpd.GeoDataFrame:
     return gpd.read_parquet(f'gs://{BUCKET}/vector/countries.parquet')
 
 
-# lazy load country boundary layer
+# lazy load states layer
 @functools.lru_cache(maxsize=1)
 def load_states() -> gpd.GeoDataFrame:
     return gpd.read_parquet(f'gs://{BUCKET}/vector/states.parquet')

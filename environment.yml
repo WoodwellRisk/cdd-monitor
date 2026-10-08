@@ -15,7 +15,8 @@ dependencies:
   - numpy
   - pandas
   - pip
-  - plotly
+  - plotly>=7.0
+  - pre_commit
   - proj
   - pyarrow
   - pyproj
@@ -26,3 +27,5 @@ dependencies:
   - shinywidgets
   - xarray
   - zarr
+  # - pip:
+  #   - git+https://github.com/woodwellrisk/theme-py.git

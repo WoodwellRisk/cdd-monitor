@@ -22,7 +22,7 @@
         top: 6px;
         bottom: 0px;
     }
-    
+
     .irs.irs--shiny .irs-bar {
         top: 5px;
         bottom: 0px;
@@ -41,9 +41,9 @@
     src: url('/GintoNormal-Regular.ttf');
 }
 
-body { 
-    margin: 0; 
-    padding: 0; 
+body {
+    margin: 0;
+    padding: 0;
     font-family: 'Ginto normal', monospace;
     --bs-body-font-family: 'Ginto normal', monospace;
 }
@@ -310,9 +310,9 @@ button:focus {
 .shiny-input-text {
     box-shadow: 0 !important;
 }
-  
+
 select option:active, select option:checked, select option:focus, select option:focus-visible {
-    outline: none !important;    
+    outline: none !important;
     border: 0px !important;
     box-shadow: none !important;
 }
@@ -446,29 +446,29 @@ select option:active, select option:checked, select option:focus, select option:
     right: 10px;
     font-family: 'Ginto normal';
 }
-  
+
 .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-top-left, .maplibregl-ctrl-top-right {
     pointer-events: none;
     position: absolute;
     z-index: 2;
 }
-  
+
 .maplibregl-map {
     font: 12px/20px 'Ginto normal';
     font-family: 'Ginto normal'
 }
-  
+
 .maplibregl-ctrl-attrib {
     background-color: #d4dadc;
     border-radius: 10px;
     padding: 2px 5px;
 }
-  
+
 /* this is necessary to remove spacing below the canvas */
 .maplibregl-canvas {
     display: block;
 }
-  
+
 .maplibregl-ctrl-attrib-button {
     display: none;
 }

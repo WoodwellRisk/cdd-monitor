@@ -1,0 +1,51 @@
+repos:
+  # isort: sorts package imports
+  - repo: https://github.com/PyCQA/isort
+    rev: 8.0.1
+    hooks:
+      - id: isort
+        args:
+          - --profile=black
+          - --line-length=100
+          - --multi-line=3
+          - --trailing-comma
+          - --force-grid-wrap=0
+          - --use-parentheses
+          - --ensure-newline-before-comments
+
+  # black: code formatter
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args:
+          - --line-length=100
+          - --target-version=py38
+          - --target-version=py39
+          - --target-version=py310
+          - --skip-string-normalization
+          - --exclude=/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist|migrations)/
+
+  # flake8: code linter
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        args:
+          - --max-line-length=100
+          # whitespace after '(', whitespace before ':', line break before binary operator, and line too long
+          - --extend-ignore=E201,E203,W503,E501
+          # ignore unused imports error in data processing files
+          # this often occurs when Python needs to load a package to use it,
+          # but doesn't call it directly
+          - --per-file-ignores=data_processing/*:F401,app/app.py:F401, app/utils.py:F401
+          - --exclude=.git,__pycache__,build,dist,.eggs,*.egg-info,migrations,venv,.venv
+
+  # cleanup hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files

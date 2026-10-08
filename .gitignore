@@ -5,3 +5,4 @@ data/
 mnt/
 .next
 node_modules
+data_processing/*.sh
